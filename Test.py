@@ -1,7 +1,7 @@
 # Libraries
 import json, requests
 import pandas as pd
-from pandas.io.json import json_normalize
+import sqlite3 as lite
 
 # Set URL
 url = 'https://api-v2.themuse.com/jobs'
@@ -37,3 +37,31 @@ print (len(df1.index) / len(data_norm.index))
 # Print number of job listings in New York City Metro Area from 2016-09-01 to 2016-09-30
 print (data_norm[(data_norm['locations'] == 'New York City Metro Area')  &
           (data_norm['publication_date'].between('2016-09-01', '2016-09-30'))])
+
+## Rearrange Dataset before storing to MYSQL database
+data_norm = data_norm[['id', 'name', 'publication_date', 'locations', 'company', 'categories','levels', 'tags',
+       'type','model_type', 'short_name', 'contents', 'refs']]
+
+
+data_norm.to_sql(db, con, flavor=None, schema=None, if_exists='fail', index=True,
+                 index_label=None, chunksize=None, dtype=None)
+## Make SQL Database
+con = lite.connect('db.db')
+cur = con.cursor()
+
+cur.execute("CREATE TABLE db("
+            "ID INT, Name TEXT, Publication_Date TEXT, Location TEXT, Company TEXT, Categories TEXT, Levels TEXT, "
+            "Type TEXT, Model_Type TEXT, Tags TEXT, Short_name TEXT, Contents TEXT, Refs TEXT)")
+df = pandas.DataFrame({'Identity': range(10), 'Name': range(5,10), 'Publication_Date': range(10,15),
+                       'Location': range(5,10),'Company': range(10,15), 'Categories': range(5,10),
+                       'Levels': range(5,10),'Type': range(10),'Model_Type': range(10),'Tags': range(5,10),
+                       'Short_name': range(10,15), 'Contents': range(100),'Refs': range(50),}, dtype=numpy.int32)
+
+cur.executemany("INSERT INTO Cars (Id, Price, Name) VALUES(?,?,?)",
+                list(df[['Identity', 'Value', 'Name']].to_records(index=False)))
+
+query ="SELECT * from The_Muse"
+cur.execute(query)
+rows= cur.fetchall()
+for row in rows:
+    print (row)
